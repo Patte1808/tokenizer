@@ -61,8 +61,21 @@ func Compute(tokenizer *tfidfTokenizer) {
 	computeTFIDFVector(tokenizer)
 }
 
+// ComputeSimiliarityBetween takes 2 vectors and computes their similiarity
+// In order to do so, we compute the dotproduct of the given vectors and divide it by the product of their magnitude
 func ComputeSimiliarityBetween(vectorX map[string]float64, vectorY map[string]float64) float64 {
 	return computeDotProduct(vectorX, vectorY) / (computeMagnitude(vectorX) * computeMagnitude(vectorY))
+}
+
+// GetFeaturesNames gets the features from all attached documents of the TFIDFTokenizer
+func GetFeatureNames(tokenizer *tfidfTokenizer) [] string {
+	var features = make([] string, len(tokenizer.AllDocumentsWordCount))
+
+	for featureName := range tokenizer.AllDocumentsWordCount {
+		features = append(features, featureName)
+	}
+
+	return features
 }
 
 // computeTF computes the term frequency for a given document

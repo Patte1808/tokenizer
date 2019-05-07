@@ -17,6 +17,7 @@ func main() {
 
 	tokenizer.Compute(tfidf)
 
-	fmt.Println(tfidf.Documents[0].TFIDFValues)
-	fmt.Println(tokenizer.ComputeSimiliarityBetween(tfidf.TFIDFVector[0], tfidf.TFIDFVector[2]))
+	//fmt.Println(tfidf.Documents[0].TFIDFValues)
+	//fmt.Println(tokenizer.ComputeSimiliarityBetween(tfidf.TFIDFVector[0], tfidf.TFIDFVector[2]))
+	fmt.Println(tokenizer.GetFeatureNames(tfidf))
 }

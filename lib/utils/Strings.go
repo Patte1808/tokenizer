@@ -8,6 +8,7 @@ func CleanDocumentContent(documentContent string) string {
 	documentContent = strings.ReplaceAll(documentContent, ",", "")
 	documentContent = strings.ReplaceAll(documentContent, ".", "")
 	documentContent = strings.ReplaceAll(documentContent, ":", "")
+	documentContent = strings.TrimSpace(documentContent)
 
 	return documentContent
 }
