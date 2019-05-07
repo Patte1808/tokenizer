@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"tf-idf/lib/tokenizer"
+	"tokenizer/lib/tokenizer"
 )
 
 func main() {

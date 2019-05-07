@@ -2,7 +2,7 @@ package tokenizer
 
 import (
 	"math"
-	"tf-idf/lib/utils"
+	"tokenizer/lib/utils"
 )
 
 type tfidfTokenizer struct {
