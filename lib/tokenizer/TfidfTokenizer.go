@@ -103,7 +103,7 @@ func computeIDF(tfidf *tfidfTokenizer) {
 	}
 
 	for word := range allDocumentsWordCount {
-		inverseDocumentFrequency[word] = 1 + math.Log(float64(len(tfidf.Documents))/float64(allDocumentsWordCount[word]))
+		inverseDocumentFrequency[word] = math.Log((1 + float64(len(tfidf.Documents))) / (1 + float64(allDocumentsWordCount[word])))
 	}
 
 	tfidf.InverseDocumentFrequency = inverseDocumentFrequency
