@@ -6,15 +6,17 @@ import (
 )
 
 type tfidfTokenizer struct {
-	Documents [] *document
-	InverseDocumentFrequency map[string] float64
+	Documents                []*document
+	AllDocumentsWordCount    map[string]int
+	InverseDocumentFrequency map[string]float64
+	TFIDFVector              []map[string]float64
 }
 
 type document struct {
-	WordCount map[string] int
-	TermFrequency map[string] float64
-	Words [] string
-	TFIDFValues map[string] float64
+	WordCount     map[string]int
+	TermFrequency map[string]float64
+	Words         []string
+	TFIDFValues   map[string]float64
 }
 
 // NewDocument creates a document
@@ -25,9 +27,9 @@ func NewDocument(documentContent string) *document {
 	document := new(document)
 	documentContent = utils.CleanDocumentContent(documentContent)
 	document.Words = utils.CreateWordsFromString(documentContent)
-	document.WordCount = make(map[string] int)
-	document.TermFrequency = make(map[string] float64)
-	document.TFIDFValues = make(map[string] float64)
+	document.WordCount = make(map[string]int)
+	document.TermFrequency = make(map[string]float64)
+	document.TFIDFValues = make(map[string]float64)
 
 	return document
 }
@@ -35,8 +37,8 @@ func NewDocument(documentContent string) *document {
 // NewTFIDFTokenizer creates a TFIDFTokenizer
 func NewTFIDFTokenizer() *tfidfTokenizer {
 	tokenizer := new(tfidfTokenizer)
-	tokenizer.InverseDocumentFrequency = make(map[string] float64)
-	tokenizer.Documents = make([] *document, 0)
+	tokenizer.InverseDocumentFrequency = make(map[string]float64)
+	tokenizer.Documents = make([]*document, 0)
 
 	return tokenizer
 }
@@ -56,8 +58,16 @@ func Compute(tokenizer *tfidfTokenizer) {
 
 	computeIDF(tokenizer)
 	computeTFIDF(tokenizer)
+	computeTFIDFVector(tokenizer)
 }
 
+func ComputeSimiliarityBetween(vectorX map[string]float64, vectorY map[string]float64) float64 {
+	return computeDotProduct(vectorX, vectorY) / (computeMagnitude(vectorX) * computeMagnitude(vectorY))
+}
+
+// computeTF computes the term frequency for a given document
+// It first calculates the overall occurence of a word in a given document
+// and then calculates the term frequency
 func computeTF(document *document) {
 	for _, word := range document.Words {
 		document.WordCount[word] += 1
@@ -68,9 +78,10 @@ func computeTF(document *document) {
 	}
 }
 
+// computeIDF returns the inverse document frequency for a given tokenizer.
 func computeIDF(tfidf *tfidfTokenizer) {
-	allDocumentsWordCount := make(map[string] int)
-	inverseDocumentFrequency := make(map[string] float64)
+	allDocumentsWordCount := make(map[string]int)
+	inverseDocumentFrequency := make(map[string]float64)
 
 	for _, document := range tfidf.Documents {
 		for _, word := range document.Words {
@@ -79,15 +90,16 @@ func computeIDF(tfidf *tfidfTokenizer) {
 	}
 
 	for word := range allDocumentsWordCount {
-		inverseDocumentFrequency[word] = 1 + math.Log(float64(len(tfidf.Documents)) / float64(allDocumentsWordCount[word]))
+		inverseDocumentFrequency[word] = 1 + math.Log(float64(len(tfidf.Documents))/float64(allDocumentsWordCount[word]))
 	}
 
 	tfidf.InverseDocumentFrequency = inverseDocumentFrequency
+	tfidf.AllDocumentsWordCount = allDocumentsWordCount
 }
 
 func computeTFIDF(tokenizer *tfidfTokenizer) {
 	for _, document := range tokenizer.Documents {
-		tfidfValues := make(map[string] float64)
+		tfidfValues := make(map[string]float64)
 
 		for word := range document.TermFrequency {
 			tfidfValues[word] = document.TermFrequency[word] * tokenizer.InverseDocumentFrequency[word]
@@ -95,4 +107,40 @@ func computeTFIDF(tokenizer *tfidfTokenizer) {
 
 		document.TFIDFValues = tfidfValues
 	}
+}
+
+func computeTFIDFVector(tokenizer *tfidfTokenizer) {
+	tfidfVector := make([](map[string]float64), len(tokenizer.Documents))
+
+	for i, document := range tokenizer.Documents {
+		tfidfVector[i] = make(map[string]float64)
+
+		for word := range tokenizer.AllDocumentsWordCount {
+			if value, ok := document.TFIDFValues[word]; ok {
+				tfidfVector[i][word] = value
+			}
+		}
+	}
+
+	tokenizer.TFIDFVector = tfidfVector
+}
+
+func computeDotProduct(vectorX map[string]float64, vectorY map[string]float64) float64 {
+	var dotProduct = 0.0
+
+	for index, value := range vectorX {
+		dotProduct += value * vectorY[index]
+	}
+
+	return dotProduct
+}
+
+func computeMagnitude(vector map[string]float64) float64 {
+	var magnitude = 0.0
+
+	for _, value := range vector {
+		magnitude += math.Pow(value, 2)
+	}
+
+	return math.Sqrt(magnitude)
 }
