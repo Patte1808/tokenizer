@@ -23,13 +23,15 @@ type document struct {
 // It requires a string which describes the document content (e.g. a sentence)
 // This function takes care of cleaning the document content from unnecessary characters (e.g. punctuation),
 // which might otherwise create some noise in the end-result
-func NewDocument(documentContent string) *document {
+func (tfidfTokenizer *tfidfTokenizer) NewDocument(documentContent string) *document {
 	document := new(document)
 	documentContent = utils.CleanDocumentContent(documentContent)
 	document.Words = utils.CreateWordsFromString(documentContent)
 	document.WordCount = make(map[string]int)
 	document.TermFrequency = make(map[string]float64)
 	document.TFIDFValues = make(map[string]float64)
+
+	tfidfTokenizer.Documents = append(tfidfTokenizer.Documents, document)
 
 	return document
 }
@@ -43,22 +45,16 @@ func NewTFIDFTokenizer() *tfidfTokenizer {
 	return tokenizer
 }
 
-// AddDocumentToTokenizer takes a document pointer and a tokenizer pointer
-// and adds the document to the tokenizers document collection
-func AddDocumentToTokenizer(doc *document, tokenizer *tfidfTokenizer) {
-	tokenizer.Documents = append(tokenizer.Documents, doc)
-}
-
 // Compute takes a pointer to a tokenizer
 // It calls all necessary functions to retrieve a TFIDF score for all documents in the tokenizers collection
-func Compute(tokenizer *tfidfTokenizer) {
+func (tokenizer *tfidfTokenizer) Compute() {
 	for _, document := range tokenizer.Documents {
-		computeTF(document)
+		document.computeTF()
 	}
 
-	computeIDF(tokenizer)
-	computeTFIDF(tokenizer)
-	computeTFIDFVector(tokenizer)
+	tokenizer.computeIDF()
+	tokenizer.computeTFIDF()
+	tokenizer.computeTFIDFVector()
 }
 
 // ComputeSimiliarityBetween takes 2 vectors and computes their similiarity
@@ -68,7 +64,7 @@ func ComputeSimiliarityBetween(vectorX map[string]float64, vectorY map[string]fl
 }
 
 // GetFeaturesNames gets the features from all attached documents of the TFIDFTokenizer
-func GetFeatureNames(tokenizer *tfidfTokenizer) [] string {
+func (tokenizer *tfidfTokenizer) GetFeatureNames() [] string {
 	var features = make([] string, len(tokenizer.AllDocumentsWordCount))
 
 	for featureName := range tokenizer.AllDocumentsWordCount {
@@ -81,7 +77,7 @@ func GetFeatureNames(tokenizer *tfidfTokenizer) [] string {
 // computeTF computes the term frequency for a given document
 // It first calculates the overall occurence of a word in a given document
 // and then calculates the term frequency
-func computeTF(document *document) {
+func (document *document) computeTF() {
 	for _, word := range document.Words {
 		document.WordCount[word] += 1
 	}
@@ -92,7 +88,7 @@ func computeTF(document *document) {
 }
 
 // computeIDF returns the inverse document frequency for a given tokenizer.
-func computeIDF(tfidf *tfidfTokenizer) {
+func (tfidf *tfidfTokenizer) computeIDF() {
 	allDocumentsWordCount := make(map[string]int)
 	inverseDocumentFrequency := make(map[string]float64)
 
@@ -110,7 +106,7 @@ func computeIDF(tfidf *tfidfTokenizer) {
 	tfidf.AllDocumentsWordCount = allDocumentsWordCount
 }
 
-func computeTFIDF(tokenizer *tfidfTokenizer) {
+func (tokenizer *tfidfTokenizer) computeTFIDF() {
 	for _, document := range tokenizer.Documents {
 		tfidfValues := make(map[string]float64)
 
@@ -122,7 +118,7 @@ func computeTFIDF(tokenizer *tfidfTokenizer) {
 	}
 }
 
-func computeTFIDFVector(tokenizer *tfidfTokenizer) {
+func (tokenizer *tfidfTokenizer) computeTFIDFVector() {
 	tfidfVector := make([](map[string]float64), len(tokenizer.Documents))
 
 	for i, document := range tokenizer.Documents {
